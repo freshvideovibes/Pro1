@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Auftragsmanager Pro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1c1c1e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      max-width: 420px;
+      margin: auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .header i {
+      font-size: 2.5rem;
+      color: #00bcd4;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .tile {
+      background-color: #2a2a2d;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .tile:hover {
+      background-color: #37373b;
+    }
+
+    .tile i {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      color: #00bcd4;
+    }
+
+    .tile span {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .page, .dashboard {
+      display: none;
+      padding: 1rem;
+    }
+
+    .page.active, .dashboard.active {
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    input, select {
+      background-color: #2a2a2d;
+      color: white;
+    }
+
+    button {
+      background-color: #00bcd4;
+      color: white;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #0097a7;
+    }
+
+    .back-btn {
+      margin-top: 1rem;
+      background-color: #444;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-header {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+    }
+
+    .role-label {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="centered">
+  <div class="header">
+    <i class="fas fa-tools"></i>
+    <h1>Auftragsmanager Pro</h1>
+  </div>
+
+  <div class="login-box">
+    <div class="login-header">🔐 Login</div>
+
+    <label class="role-label">Rolle wählen:</label>
+    <select id="role">
+      <option value="">– bitte wählen –</option>
+      <option value="admin">Admin</option>
+      <option value="agent">Agent</option>
+      <option value="monteur">Monteur</option>
+    </select>
+
+    <input type="password" id="password" placeholder="Passwort">
+    <button onclick="login()">Einloggen</button>
+
+    <div id="login-error" style="color: #ff6666; display:none;">❌ Falsches Passwort oder keine Rolle gewählt</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="dashboard">
+  <div class="header">
+    <i class="fas fa-user-shield"></i>
+    <h1 id="dashboard-title">Willkommen</h1>
+  </div>
+
+  <div id="tile-grid" class="grid"></div>
+</div>
+
+<!-- SEITE: Neuer Auftrag -->
+<div id="neuer-auftrag" class="page">
+  <button class="back-btn" onclick="backToDashboard()">← Zurück</button>
+  <h2>🆕 Neuer Auftrag</h2>
+
+  <input type="text" placeholder="Name des Kunden" id="auftrag-name">
+  <input type="text" placeholder="Telefonnummer" id="auftrag-telefon">
+  <input type="text" placeholder="Postleitzahl" id="auftrag-plz">
+  <input type="text" placeholder="Adresse" id="auftrag-adresse">
+  <input type="text" placeholder="Ort" id="auftrag-ort">
+  
+  <select id="auftrag-land">
+    <option value="">Land wählen</option>
+    <option value="AT">Österreich</option>
+    <option value="CH">Schweiz</option>
+  </select>
+
+  <select id="auftrag-branche">
+    <option value="">Branche wählen</option>
+    <option>Rohrreinigung</option>
+    <option>Schlüsseldienst</option>
+    <option>Schädlingsbekämpfung</option>
+    <option>Sanitär</option>
+  </select>
+
+  <label>Termin (optional):</label>
+  <input type="date" id="auftrag-termin-datum">
+  <input type="time" id="auftrag-termin-uhrzeit">
+
+  <button onclick="sendeNeuenAuftrag()">📨 Auftrag absenden</button>
+</div>
+
+<!-- SEITE: Monteur zuweisen -->
+<div id="monteur" class="page">
+  <button class="back-btn" onclick="backToDashboard()">← Zurück</button>
+  <h2>👷 Monteur zuweisen</h2>
+
+  <input type="text" id="monteur-suche" placeholder="Auftragsnummer oder PLZ eingeben">
+  <button onclick="sucheMonteurZuweisung()">🔍 Auftrag finden</button>
+
+  <div id="monteur-ergebnis" style="margin-top:1rem;"></div>
+
+  <div id="monteur-formular" class="hidden">
+    <p><strong>Auftrag:</strong> <span id="monteur-auftrag-info"></span></p>
+
+    <label>Monteur wählen:</label>
+    <select id="monteur-dropdown">
+      <!-- Wird dynamisch gefüllt -->
+    </select>
+
+    <button onclick="weiseMonteurZu()">✅ Zuweisen</button>
+  </div>
+</div>
+
+<!-- SEITE: Umsatz (bereits vorher vorhanden) -->
+<div id="umsatz" class="page">
+  <button class="back-btn" onclick="backToDashboard()">← Zurück</button>
+  <h2>💰 Umsatz melden</h2>
+
+  <input type="text" id="umsatz-suche" placeholder="PLZ, Tel. oder Auftragsnummer eingeben">
+  <button onclick="sucheAuftragMonteur()">🔍 Auftrag suchen</button>
+
+  <div id="umsatz-suchergebnis" style="margin-top:1rem;"></div>
+
+  <div id="umsatz-formular" class="hidden">
+    <p><strong>Gefundener Auftrag:</strong> <span id="auftrag-info"></span></p>
+
+    <input type="number" id="umsatz-betrag" placeholder="Betrag in €">
+    <select id="umsatz-zahlart">
+      <option value="">Zahlungsart wählen</option>
+      <option>Bar</option>
+      <option>Überweisung</option>
+      <option>EC</option>
+      <option>Twint</option>
+    </select>
+
+    <button onclick="sendeUmsatz()">✅ Umsatz melden</button>
+    <button onclick="markiereStatus('nicht bezahlt')">⚠️ Nicht bezahlt</button>
+    <button onclick="markiereStatus('storniert')">❌ Auftrag storniert</button>
+  </div>
+</div>
+
+<script>
+  let currentUserRole = "";
+
+  const rechte = {
+    admin: ["neuer-auftrag", "auftrag-suchen", "umsatz", "monteur", "wartezeit", "report"],
+    agent: ["neuer-auftrag", "auftrag-suchen", "wartezeit"],
+    monteur: ["umsatz", "report"]
+  };
+
+  function login() {
+    const role = document.getElementById("role").value;
+    const pw = document.getElementById("password").value;
+
+    const passwoerter = {
+      admin: "admin123",
+      agent: "agent123",
+      monteur: "monteur123"
+    };
+
+    if (role && pw === passwoerter[role]) {
+      currentUserRole = role;
+      document.getElementById("login").style.display = "none";
+      document.getElementById("dashboard").classList.add("active");
+      document.getElementById("dashboard-title").innerText = `Willkommen, ${role.toUpperCase()}`;
+      baueDashboardTiles(role);
+    } else {
+      document.getElementById("login-error").style.display = "block";
+    }
+  }
+
+  function baueDashboardTiles(role) {
+    const tiles = {
+      "neuer-auftrag": ["fas fa-file-circle-plus", "Neuer Auftrag"],
+      "auftrag-suchen": ["fas fa-search", "Auftrag suchen"],
+      "wartezeit": ["fas fa-clock", "Wartezeit"],
+      "umsatz": ["fas fa-euro-sign", "Umsatz"],
+      "monteur": ["fas fa-user-cog", "Monteur zuweisen"],
+      "report": ["fas fa-chart-line", "Tagesreport"]
+    };
+
+    const grid = document.getElementById("tile-grid");
+    grid.innerHTML = "";
+
+    rechte[role].forEach((id) => {
+      const [icon, label] = tiles[id];
+      const div = document.createElement("div");
+      div.className = "tile";
+      div.innerHTML = `<i class="${icon}"></i><span>${label}</span>`;
+      div.onclick = () => showPage(id);
+      grid.appendChild(div);
+    });
+  }
+
+  function showPage(id) {
+    document.getElementById("dashboard").classList.remove("active");
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  function backToDashboard() {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("dashboard").classList.add("active");
+  }
+
+  // Dummy-Aufträge
+  const auftraege = [
+    { nummer: "4711", plz: "12345", tel: "0660123456", kunde: "Max Mustermann", branche: "Sanitär", land: "AT" },
+    { nummer: "4712", plz: "23456", tel: "0660654321", kunde: "Lisa Müller", branche: "Rohrreinigung", land: "CH" },
+    { nummer: "4713", plz: "34567", tel: "0660777888", kunde: "Ali Yilmaz", branche: "Schlüsseldienst", land: "AT" },
+  ];
+
+  // Dummy-Monteure
+  const monteure = {
+    AT: ["Thomas", "Julia", "Sven"],
+    CH: ["Marco", "Nico", "Anna"]
+  };
+
+  // Neuer Auftrag senden
+  function sendeNeuenAuftrag() {
+    const name = document.getElementById("auftrag-name").value;
+    const tel = document.getElementById("auftrag-telefon").value;
+    const plz = document.getElementById("auftrag-plz").value;
+    const adresse = document.getElementById("auftrag-adresse").value;
+    const ort = document.getElementById("auftrag-ort").value;
+    const land = document.getElementById("auftrag-land").value;
+    const branche = document.getElementById("auftrag-branche").value;
+    const datum = document.getElementById("auftrag-termin-datum").value;
+    const uhrzeit = document.getElementById("auftrag-termin-uhrzeit").value;
+
+    const termin = datum && uhrzeit ? `${datum} ${uhrzeit}` : "Kein Termin";
+
+    console.log("📨 Neuer Auftrag:", { name, tel, plz, adresse, ort, land, branche, termin });
+
+    alert("✅ Auftrag wurde erfasst!");
+    backToDashboard();
+  }
+
+  // Umsatz-Suche Monteur
+  function sucheAuftragMonteur() {
+    const query = document.getElementById("umsatz-suche").value.trim();
+    const ergebnis = auftraege.find(a =>
+      a.nummer === query || a.plz === query || a.tel === query
+    );
+
+    const resultBox = document.getElementById("umsatz-suchergebnis");
+    const formular = document.getElementById("umsatz-formular");
+
+    if (ergebnis) {
+      document.getElementById("auftrag-info").innerText = `${ergebnis.nummer} – ${ergebnis.branche} – ${ergebnis.kunde}`;
+      resultBox.innerHTML = `<p>✅ Auftrag gefunden: <strong>${ergebnis.nummer}</strong></p>`;
+      formular.classList.remove("hidden");
+    } else {
+      resultBox.innerHTML = `<p>❌ Kein Auftrag gefunden.</p>`;
+      formular.classList.add("hidden");
+    }
+  }
+
+  function sendeUmsatz() {
+    const betrag = document.getElementById("umsatz-betrag").value;
+    const zahlart = document.getElementById("umsatz-zahlart").value;
+    const auftrag = document.getElementById("auftrag-info").innerText;
+
+    console.log("💰 Umsatz gesendet:", { auftrag, betrag, zahlart });
+    alert("✅ Umsatz gemeldet!");
+    backToDashboard();
+  }
+
+  function markiereStatus(status) {
+    const auftrag = document.getElementById("auftrag-info").innerText;
+    console.log(`⚠️ Auftrag "${auftrag}" als ${status.toUpperCase()} markiert`);
+    alert(`⚠️ Auftrag als ${status} markiert.`);
+    backToDashboard();
+  }
+
+  // Monteur-Zuweisung
+  function sucheMonteurZuweisung() {
+    const query = document.getElementById("monteur-suche").value.trim();
+    const auftrag = auftraege.find(a => a.nummer === query || a.plz === query);
+
+    const ergebnisBox = document.getElementById("monteur-ergebnis");
+    const formular = document.getElementById("monteur-formular");
+
+    if (auftrag) {
+      document.getElementById("monteur-auftrag-info").innerText =
+        `${auftrag.nummer} – ${auftrag.kunde} – ${auftrag.branche} – ${auftrag.plz}`;
+
+      const dropdown = document.getElementById("monteur-dropdown");
+      dropdown.innerHTML = "";
+      const liste = monteure[auftrag.land] || [];
+
+      liste.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        dropdown.appendChild(opt);
+      });
+
+      formular.classList.remove("hidden");
+      ergebnisBox.innerHTML = `<p>✅ Auftrag gefunden: ${auftrag.kunde} (${auftrag.land})</p>`;
+    } else {
+      ergebnisBox.innerHTML = `<p>❌ Kein Auftrag gefunden.</p>`;
+      formular.classList.add("hidden");
+    }
+  }
+
+  function weiseMonteurZu() {
+    const monteur = document.getElementById("monteur-dropdown").value;
+    const auftrag = document.getElementById("monteur-auftrag-info").innerText;
+    console.log(`👷 Monteur ${monteur} wurde zugewiesen an: ${auftrag}`);
+    alert(`✅ ${monteur} wurde dem Auftrag zugewiesen.`);
+    backToDashboard();
+  }
+</script>
+</body>
+</html>
